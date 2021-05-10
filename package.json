@@ -1,13 +1,13 @@
 {
   "name": "@gugamm/use-api",
   "version": "1.0.0",
-  "description": "Use api hooks for React.jS",
+  "description": "Use api hooks for React.JS",
   "author": "gugamm",
   "license": "MIT",
-  "repository": "gugamm/@gugamm/use-api",
+  "repository": "gugamm/use-api",
   "main": "dist/index.js",
   "module": "dist/index.modern.js",
-  "source": "src/index.tsx",
+  "source": "src/index.ts",
   "engines": {
     "node": ">=10"
   },
