@@ -30,6 +30,10 @@ const myRequest = async (a: number, b: number) => Promise<number> => {
 const App: React.FC = () => {
     const [state, request] = useApi(myRequest)
 
+    React.useEffect(() => {
+      request(10, 20)
+    }, [])
+
     if (!state.called || state.loading) {
         return <div>Loading...</div>
     }
