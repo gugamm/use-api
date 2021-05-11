@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Fetcher, OperationState, OperationTrigger, InitialOperationState, LoadingOperationState, ErrorOperationState, SuccessOperationState } from './types'
 import { ExtractPromiseType } from './utilTypes'
 import { sharedStore } from './sharedStore'
@@ -39,17 +39,24 @@ export type ClearStateFn = () => void
 export type UseSharedApiResult<TArgs extends Array<any>, TData> = [OperationState<TData>, OperationTrigger<TArgs, TData>, ClearStateFn]
 export const useSharedApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher, storeKey: string): UseSharedApiResult<Parameters<TFetcher>, ExtractPromiseType<ReturnType<TFetcher>>> => {
   const [operationState, setOperationState] = useState<OperationState<ExtractPromiseType<ReturnType<TFetcher>>>>(sharedStore.getState(storeKey) || INITIAL_OPERATION_STATE)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [isMountedRef])
 
   const handleStateUpdate = useCallback((newState: any) => {
-    setOperationState(newState)
-  }, [setOperationState])
-
-  const clearSharedState = useCallback((hardDelete: boolean = false) => {
-    if (!hardDelete) {
-      sharedStore.publish(storeKey, INITIAL_OPERATION_STATE)
-    } else {
-      sharedStore.clearState(storeKey)
+    if (isMountedRef.current) {
+      setOperationState(newState)
     }
+  }, [setOperationState, isMountedRef])
+
+  const clearSharedState = useCallback(() => {
+    sharedStore.publish(storeKey, INITIAL_OPERATION_STATE)
   }, [storeKey])
 
   useEffect(() => {

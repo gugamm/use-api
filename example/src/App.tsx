@@ -4,7 +4,7 @@ import * as api from './api'
 
 const App = () => {
   const [user, setUser] = useState('')
-  const [getRepositoriesState, getRepositories] = useSharedApi(api.getRepositories, 'test')
+  const [getRepositoriesState, getRepositories, clearRepositoriesState] = useSharedApi(api.getRepositories, 'test')
   const copyState = useSharedApiState('test')
 
   const fetchRepositories = useCallback((user: string) => {
@@ -22,6 +22,7 @@ const App = () => {
         <label>User:</label>
         <input type='text' value={user} onChange={e => setUser(e.target.value)} />
         <button type='submit' disabled={getRepositoriesState.loading}>Search</button>
+        <button type='button' onClick={clearRepositoriesState}>Clear state</button>
       </form>
       <div>
         <pre>{JSON.stringify(({ ...copyState, data: null }), null, 2)}</pre>

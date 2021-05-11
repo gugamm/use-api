@@ -44,7 +44,7 @@ export const useApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher): UseApi
     return () => {
       isMountedRef.current = false
     }
-  }, [])
+  }, [isMountedRef])
 
   const operationTrigger = useCallback(async (...args: Parameters<TFetcher>) => {
     if (isMountedRef.current) {
@@ -63,7 +63,7 @@ export const useApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher): UseApi
       }
       return errorState(err)
     }
-  }, [fetcher])
+  }, [fetcher, isMountedRef])
 
   return [operationState, operationTrigger]
 }
