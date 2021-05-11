@@ -1,30 +1,47 @@
-# @gugamm/use-api
+# use-api
 
-> Use api hooks for React.jS
+use-api is a set of simple React.JS hooks that helps managing state for api requests. It comes with only two hooks: "useApi" and "useSharedApi".
 
-[![NPM](https://img.shields.io/npm/v/@gugamm/use-api.svg)](https://www.npmjs.com/package/@gugamm/use-api) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+## Installation
 
-## Install
-
-```bash
+```sh
 npm install --save @gugamm/use-api
 ```
 
-## Usage
+## Typescript
+
+This library was built with TS. No need to install type descriptions.
+
+## Example
 
 ```tsx
-import React, { Component } from 'react'
+import * as React from 'react'
+import { useApi } from '@gugamm/use-api'
 
-import MyComponent from '@gugamm/use-api'
-import '@gugamm/use-api/dist/index.css'
+const myRequest = async (a: number, b: number) => Promise<number> => {
+    const request = await fetch(`https://yourapi.com/sum`, {
+        method: 'POST',
+        body: JSON.stringify({ a, b })
+    })
+    const parsedResponse = await request.json()
+    return parsedResponse
+}
 
-class Example extends Component {
-  render() {
-    return <MyComponent />
-  }
+const App: React.FC = () => {
+    const [state, request] = useApi(myRequest)
+
+    if (!state.called || state.loading) {
+        return <div>Loading...</div>
+    }
+
+    if (!state.ok) {
+        return <div>Error: {state.data}</div>
+    }
+
+    return <div>Result: {state.data}</div>
 }
 ```
 
 ## License
 
-MIT © [gugamm](https://github.com/gugamm)
+MIT
