@@ -35,13 +35,22 @@ const successState = <TData>(data: TData): SuccessOperationState<TData> => {
   }
 }
 
-export type UseApiResult<TArgs extends Array<any>, TData> = [OperationState<TData>, OperationTrigger<TArgs, TData>]
-export const useSharedApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher, storeKey: string): UseApiResult<Parameters<TFetcher>, ExtractPromiseType<ReturnType<TFetcher>>> => {
+export type ClearStateFn = () => void
+export type UseSharedApiResult<TArgs extends Array<any>, TData> = [OperationState<TData>, OperationTrigger<TArgs, TData>, ClearStateFn]
+export const useSharedApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher, storeKey: string): UseSharedApiResult<Parameters<TFetcher>, ExtractPromiseType<ReturnType<TFetcher>>> => {
   const [operationState, setOperationState] = useState<OperationState<ExtractPromiseType<ReturnType<TFetcher>>>>(sharedStore.getState(storeKey) || INITIAL_OPERATION_STATE)
 
   const handleStateUpdate = useCallback((newState: any) => {
     setOperationState(newState)
   }, [setOperationState])
+
+  const clearSharedState = useCallback((hardDelete: boolean = false) => {
+    if (!hardDelete) {
+      sharedStore.publish(storeKey, INITIAL_OPERATION_STATE)
+    } else {
+      sharedStore.clearState(storeKey)
+    }
+  }, [storeKey])
 
   useEffect(() => {
     const unsubscribe = sharedStore.subscribe(storeKey, handleStateUpdate, INITIAL_OPERATION_STATE)
@@ -64,5 +73,5 @@ export const useSharedApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher, s
     }
   }, [fetcher, storeKey])
 
-  return [operationState, operationTrigger]
+  return [operationState, operationTrigger, clearSharedState]
 }

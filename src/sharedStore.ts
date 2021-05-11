@@ -33,6 +33,12 @@ class SharedStore {
 
     return this.dataPerKey[key].data
   }
+
+  clearState(key: string): void {
+    if (this.dataPerKey[key]) {
+      delete this.dataPerKey[key]
+    }
+  }
 }
 
 export const sharedStore = new SharedStore()
