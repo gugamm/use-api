@@ -1,6 +1,6 @@
 # use-api
 
-use-api is a set of simple React.JS hooks that helps managing state for api requests. It comes with only two hooks: "useApi" and "useSharedApi".
+use-api is a set of simple React.JS hooks that helps managing state for api requests.
 
 ## Installation
 

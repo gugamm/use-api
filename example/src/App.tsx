@@ -1,10 +1,11 @@
 import React, { FormEvent, useCallback, useState } from 'react'
-import { useApi } from '@gugamm/use-api'
+import { useSharedApi, useSharedApiState } from '@gugamm/use-api'
 import * as api from './api'
 
 const App = () => {
   const [user, setUser] = useState('')
-  const [getRepositoriesState, getRepositories] = useApi(api.getRepositories)
+  const [getRepositoriesState, getRepositories] = useSharedApi(api.getRepositories, 'test')
+  const copyState = useSharedApiState('test')
 
   const fetchRepositories = useCallback((user: string) => {
     getRepositories(user)
@@ -13,7 +14,7 @@ const App = () => {
   const handleSubmit = useCallback((event: FormEvent) => {
     event.preventDefault()
     fetchRepositories(user)
-  }, [user])
+  }, [user, fetchRepositories])
 
   return (
     <div>
@@ -22,6 +23,9 @@ const App = () => {
         <input type='text' value={user} onChange={e => setUser(e.target.value)} />
         <button type='submit' disabled={getRepositoriesState.loading}>Search</button>
       </form>
+      <div>
+        <pre>{JSON.stringify(({ ...copyState, data: null }), null, 2)}</pre>
+      </div>
       <div>
         {!getRepositoriesState.called && 'Click search to fetch a list'}
         {getRepositoriesState.loading && 'Loading'}
