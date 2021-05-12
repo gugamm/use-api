@@ -12,7 +12,9 @@ npm install --save @gugamm/use-api
 
 This library was built with TS. No need to install type descriptions.
 
-## Example
+## useApi example
+
+`useApi` is a hook that manage the request state locally.
 
 ```tsx
 import * as React from 'react'
@@ -43,6 +45,78 @@ const App: React.FC = () => {
     }
 
     return <div>Result: {state.data}</div>
+}
+```
+
+## useSharedApi and useSharedApiState example
+
+`useSharedApi` is a hook that manage the request state at a shared store that the lib manage internally. By using the same `key` parameter, multiple components can access this shared state.
+
+You can also consider using the `useSharedApiState`. This hook will only watch for changes at the request state. You should use this hook if your component will not be the one triggering the request.
+
+```tsx
+import * as React from 'react'
+import { useSharedApiState, useSharedApi } from '@gugamm/use-api'
+
+const myRequest = async (a: number, b: number) => Promise<number> => {
+    const request = await fetch(`https://yourapi.com/sum`, {
+        method: 'POST',
+        body: JSON.stringify({ a, b })
+    })
+    const parsedResponse = await request.json()
+    return parsedResponse
+}
+
+const ResultComponent: React.FC = () => {
+    const state = useSharedApiState('example')
+
+    if (!state.called || state.loading) {
+        return <div>Loading...</div>
+    }
+
+    if (!state.ok) {
+        return <div>Error: {state.data}</div>
+    }
+
+    return <div>Result: {state.data}</div>
+}
+
+const App: React.FC = () => {
+    const [state, request] = useSharedApi(myRequest, 'example')
+
+    React.useEffect(() => {
+      request(10, 20)
+    }, [])
+
+    return <ResultComponent />
+}
+```
+
+## Enhanced shared api hook recipe
+
+`useSharedApi` does not handle cases where you might trigger multiple requests for the same key in parallel. Usually you should have one "shared request" being processed by time. You should avoid this in your application. If you want a hook to avoid having multiple shared requests happening at same time automatically, you can create your own hook. Here is an example:
+
+```tsx
+import * as React from 'react'
+import { useSharedApi } from '@gugamm/use-api'
+
+const sharedOperations: any = {}
+
+const useEnhancedSharedApi: typeof useSharedApi = (fetcher: Fetcher<any>, key: string) => {
+  const [state, makeRequest, clearState] = useSharedApi(fetcher, key)
+
+  const connectedRequest: typeof makeRequest = React.useCallback(async (...args: any[]) => {
+    if (sharedOperations[key]) {
+      return sharedOperations[key]
+    }
+
+    sharedOperations[key] = makeRequest(...args)
+    sharedOperations[key].then(() => delete sharedOperations[key])
+
+    return sharedOperations[key]
+  }, [makeRequest, key])
+
+  return [state, connectedRequest, clearState]
 }
 ```
 
