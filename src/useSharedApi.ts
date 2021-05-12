@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Fetcher, OperationState, OperationTrigger, InitialOperationState, LoadingOperationState, ErrorOperationState, SuccessOperationState } from './types'
 import { ExtractPromiseType } from './utilTypes'
 import { sharedStore } from './sharedStore'
@@ -38,7 +38,10 @@ const successState = <TData>(data: TData): SuccessOperationState<TData> => {
 export type ClearStateFn = () => void
 export type UseSharedApiResult<TArgs extends Array<any>, TData> = [OperationState<TData>, OperationTrigger<TArgs, TData>, ClearStateFn]
 export const useSharedApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher, storeKey: string): UseSharedApiResult<Parameters<TFetcher>, ExtractPromiseType<ReturnType<TFetcher>>> => {
-  const [operationState, setOperationState] = useState<OperationState<ExtractPromiseType<ReturnType<TFetcher>>>>(sharedStore.getState(storeKey) || INITIAL_OPERATION_STATE)
+  const initialState = useMemo(() => {
+    return sharedStore.getState(storeKey) || INITIAL_OPERATION_STATE
+  }, [storeKey])
+  const [operationState, setOperationState] = useState<OperationState<ExtractPromiseType<ReturnType<TFetcher>>>>(initialState)
   const isMountedRef = useRef(true)
 
   useEffect(() => {
@@ -60,12 +63,12 @@ export const useSharedApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher, s
   }, [storeKey])
 
   useEffect(() => {
-    const unsubscribe = sharedStore.subscribe(storeKey, handleStateUpdate, INITIAL_OPERATION_STATE)
+    const unsubscribe = sharedStore.subscribe(storeKey, handleStateUpdate, initialState)
 
     return () => {
       unsubscribe()
     }
-  }, [handleStateUpdate, storeKey])
+  }, [handleStateUpdate, storeKey, initialState])
 
   const operationTrigger = useCallback(async (...args: Parameters<TFetcher>) => {
     sharedStore.publish(storeKey, LOADING_STATE)

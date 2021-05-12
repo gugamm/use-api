@@ -14,6 +14,10 @@ class SharedStore {
       }
     }
 
+    if (initialState !== this.dataPerKey[key].data) {
+      listener(this.dataPerKey[key].data)
+    }
+
     return () => {
       this.dataPerKey[key].listeners = this.dataPerKey[key].listeners.filter(l => l !== listener)
     }
