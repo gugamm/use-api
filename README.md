@@ -18,15 +18,23 @@ This library was built with TS. No need to install type descriptions.
 
 ```tsx
 import * as React from 'react'
-import { useApi } from '@gugamm/use-api'
+import { useApi, FetcherResult, ApiResult } from '@gugamm/use-api'
 
-const myRequest = async (a: number, b: number) => Promise<number> => {
+type MyRequestSuccess = number
+type MyRequestError = { message: string }
+const myRequest = async (a: number, b: number) => Promise<FetcherResult<MyRequestSuccess, MyRequestError>> => {
     const request = await fetch(`https://yourapi.com/sum`, {
         method: 'POST',
         body: JSON.stringify({ a, b })
     })
+
     const parsedResponse = await request.json()
-    return parsedResponse
+
+    if (request.ok) {
+        return ApiResult.success(parsedResponse)
+    }
+
+    return ApiResult.error({ message: parsedResponse.errorMessage })
 }
 
 const App: React.FC = () => {
@@ -41,7 +49,7 @@ const App: React.FC = () => {
     }
 
     if (!state.ok) {
-        return <div>Error: {state.data}</div>
+        return <div>Error: {state.error}</div>
     }
 
     return <div>Result: {state.data}</div>
@@ -56,15 +64,23 @@ You can also consider using the `useSharedApiState`. This hook will only watch f
 
 ```tsx
 import * as React from 'react'
-import { useSharedApiState, useSharedApi } from '@gugamm/use-api'
+import { useSharedApiState, useSharedApi, FetcherResult, ApiResult } from '@gugamm/use-api'
 
-const myRequest = async (a: number, b: number) => Promise<number> => {
+type MyRequestSuccess = number
+type MyRequestError = { message: string }
+const myRequest = async (a: number, b: number) => Promise<FetcherResult<MyRequestSuccess, MyRequestError>> => {
     const request = await fetch(`https://yourapi.com/sum`, {
         method: 'POST',
         body: JSON.stringify({ a, b })
     })
+
     const parsedResponse = await request.json()
-    return parsedResponse
+
+    if (request.ok) {
+        return ApiResult.success(parsedResponse)
+    }
+
+    return ApiResult.error({ message: parsedResponse.errorMessage })
 }
 
 const ResultComponent: React.FC = () => {
@@ -75,7 +91,7 @@ const ResultComponent: React.FC = () => {
     }
 
     if (!state.ok) {
-        return <div>Error: {state.data}</div>
+        return <div>Error: {state.error}</div>
     }
 
     return <div>Result: {state.data}</div>
@@ -98,11 +114,11 @@ const App: React.FC = () => {
 
 ```tsx
 import * as React from 'react'
-import { useSharedApi } from '@gugamm/use-api'
+import { useSharedApi, Fetcher } from '@gugamm/use-api'
 
 const sharedOperations: any = {}
 
-const useEnhancedSharedApi: typeof useSharedApi = (fetcher: Fetcher<any>, key: string) => {
+const useEnhancedSharedApi: typeof useSharedApi = (fetcher: Fetcher<any, any>, key: string) => {
   const [state, makeRequest, clearState] = useSharedApi(fetcher, key)
 
   const connectedRequest: typeof makeRequest = React.useCallback(async (...args: any[]) => {
@@ -111,7 +127,10 @@ const useEnhancedSharedApi: typeof useSharedApi = (fetcher: Fetcher<any>, key: s
     }
 
     sharedOperations[key] = makeRequest(...args)
-    sharedOperations[key].then(() => delete sharedOperations[key])
+    sharedOperations[key].then((state: OperationState<any, any>) => {
+        delete sharedOperations[key]
+        return state
+    })
 
     return sharedOperations[key]
   }, [makeRequest, key])
