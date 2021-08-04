@@ -1,3 +1,5 @@
+import { ApiResult, FetcherResult } from '@gugamm/use-api'
+
 const delay = async (ms: number): Promise<void> => {
   return new Promise(resolve => {
     setTimeout(resolve, ms)
@@ -16,7 +18,22 @@ export interface Repository {
   name: string,
   full_name: string
 }
-export const getRepositories = async (): Promise<Repository[]> => {
+export interface GetRepositoriesError {
+  message: string,
+  value: number,
+  test: string
+}
+export const getRepositories = async (): Promise<FetcherResult<Repository[], GetRepositoriesError>> => {
+  const random = Math.floor(Math.random() * 10)
   await delay(2000)
-  return repositories
+
+  if (random > 5) {
+    return ApiResult.error({
+      message: 'Test',
+      value: random,
+      test: 'hello'
+    })
+  }
+
+  return ApiResult.success(repositories)
 }

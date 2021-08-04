@@ -10,9 +10,6 @@ const App = () => {
       {isMounted && (
         <div>
           <FetchRepository />
-          <FetchRepository />
-          <FetchRepository />
-          <FetchRepository />
         </div>
       )}
     </>

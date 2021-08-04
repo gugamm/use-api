@@ -1,41 +1,20 @@
 import * as React from 'react'
-import { useSharedApi, Fetcher, OperationState } from '@gugamm/use-api'
+import { useApi } from '@gugamm/use-api'
 import * as api from './api'
 
-const sharedOperations: any = {}
-
-const useSharedApiResource: typeof useSharedApi = (fetcher: Fetcher<any>, key: string) => {
-  const [state, makeRequest, clearState] = useSharedApi(fetcher, key)
-
-  const connectedRequest: typeof makeRequest = React.useCallback(async (...args: any[]) => {
-    if (sharedOperations[key]) {
-      return sharedOperations[key]
-    }
-
-    sharedOperations[key] = makeRequest(...args)
-    sharedOperations[key].then((state: OperationState<any>) => {
-      delete sharedOperations[key]
-      return state
-    })
-
-    return sharedOperations[key]
-  }, [makeRequest, key])
-
-  return [state, connectedRequest, clearState]
-}
-
 export const FetchRepository: React.FC = () => {
-  const [getReposState, getRepos, clearState] = useSharedApiResource(api.getRepositories, 'repos')
+  const [getReposState, getRepos] = useApi(api.getRepositories)
 
   React.useEffect(() => {
-    getRepos()
+    (async () => {
+      const result = await getRepos()
+      if (result.ok) {
+        console.log(result.data)
+      } else {
+        console.log(result.error)
+      }
+    })()
   }, [getRepos])
-
-  React.useEffect(() => {
-    return () => {
-      clearState()
-    }
-  }, [clearState])
 
   if (!getReposState.called || getReposState.loading) {
     return (
@@ -49,13 +28,21 @@ export const FetchRepository: React.FC = () => {
   }
 
   if (!getReposState.ok) {
-    return <div>Error...</div>
+    return (
+      <div>
+        <h2>Error</h2>
+        <pre>
+          {JSON.stringify(getReposState.error)}
+        </pre>
+      </div>
+    )
   }
 
   // const repos = getReposState.data.map(repo => <div key={repo}>{repo}</div>)
 
   return (
     <div>
+      <h2>Success</h2>
       <pre>
         {JSON.stringify({...getReposState, data: null }, null, 2)}
       </pre>

@@ -6,11 +6,12 @@ const INITIAL_OPERATION_STATE: InitialOperationState = {
   called: false,
   data: null,
   loading: false,
-  ok: false
+  ok: false,
+  error: null
 }
 
-export const useSharedApiState = <TData>(storeKey: string): OperationState<TData> => {
-  const [operationState, setOperationState] = useState<OperationState<TData>>(sharedStore.getState(storeKey) || INITIAL_OPERATION_STATE)
+export const useSharedApiState = <TSuccessData, TErrorData>(storeKey: string): OperationState<TSuccessData, TErrorData> => {
+  const [operationState, setOperationState] = useState<OperationState<TSuccessData, TErrorData>>(sharedStore.getState(storeKey) || INITIAL_OPERATION_STATE)
   const isMountedRef = useRef(true)
 
   useEffect(() => {

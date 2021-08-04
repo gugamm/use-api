@@ -2,30 +2,41 @@ export type InitialOperationState = {
   called: false,
   ok: false,
   data: null,
-  loading: false
+  loading: false,
+  error: null
 }
 
 export type LoadingOperationState = {
   called: true,
   ok: false,
   data: null,
-  loading: true
+  loading: true,
+  error: null
 }
 
 export type SuccessOperationState<TData> = {
   called: true,
   ok: true,
   data: TData,
-  loading: false
+  loading: false,
+  error: null
 }
 
-export type ErrorOperationState<TData> = {
+export type ErrorOperationState<TError> = {
   called: true,
   ok: false,
-  data: TData,
+  error: TError,
+  data: null,
   loading: false
 }
 
-export type OperationState<TData> = InitialOperationState | LoadingOperationState | SuccessOperationState<TData> | ErrorOperationState<TData>
-export type OperationTrigger<TArgs extends Array<any>, TData> = (...args: TArgs) => Promise<SuccessOperationState<TData> | ErrorOperationState<TData>>
-export type Fetcher<TData> = (...args: any[]) => Promise<TData>
+export type OperationState<TSuccessData, TErrorData> = InitialOperationState | LoadingOperationState | SuccessOperationState<TSuccessData> | ErrorOperationState<TErrorData>
+export type OperationTrigger<TArgs extends Array<any>, TSuccessData, TErrorData> = (...args: TArgs) => Promise<SuccessOperationState<TSuccessData> | ErrorOperationState<TErrorData>>
+export enum FetchResultType {
+  SUCCESS = 'success',
+  ERROR = 'error'
+}
+export type SuccessFetchResult<T> = { type: FetchResultType.SUCCESS, data: T }
+export type ErrorFetchResult<T> = { type: FetchResultType.ERROR, error: T }
+export type FetcherResult<TSuccess, TError> = SuccessFetchResult<TSuccess> | ErrorFetchResult<TError>
+export type Fetcher<TSuccessData, TErrorData> = (...args: any[]) => Promise<FetcherResult<TSuccessData, TErrorData>>

@@ -1,1 +1,3 @@
-export type ExtractPromiseType<T> = T extends Promise<infer K> ? K : never
+import { Fetcher } from './types'
+
+export type ExtractResultsFromFetcher<T> = T extends Fetcher<infer TSuccess, infer TError> ? [TSuccess, TError] : never

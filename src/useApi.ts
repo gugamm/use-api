@@ -1,27 +1,30 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Fetcher, OperationState, OperationTrigger, InitialOperationState, LoadingOperationState, ErrorOperationState, SuccessOperationState } from './types'
-import { ExtractPromiseType } from './utilTypes'
+import { Fetcher, OperationState, OperationTrigger, InitialOperationState, LoadingOperationState, ErrorOperationState, SuccessOperationState, FetchResultType } from './types'
+import { ExtractResultsFromFetcher } from './utilTypes'
 
 const INITIAL_OPERATION_STATE: InitialOperationState = {
   called: false,
   data: null,
   loading: false,
-  ok: false
+  ok: false,
+  error: null
 }
 
 const LOADING_STATE: LoadingOperationState = {
   called: true,
   data: null,
   loading: true,
-  ok: false
+  ok: false,
+  error: null
 }
 
-const errorState = <TData>(errorData: TData): ErrorOperationState<TData> => {
+const errorState = <TError>(errorData: TError): ErrorOperationState<TError> => {
   return {
     called: true,
-    data: errorData,
+    data: null,
     loading: false,
-    ok: false
+    ok: false,
+    error: errorData
   }
 }
 
@@ -30,13 +33,14 @@ const successState = <TData>(data: TData): SuccessOperationState<TData> => {
     called: true,
     data: data,
     loading: false,
-    ok: true
+    ok: true,
+    error: null
   }
 }
 
-export type UseApiResult<TArgs extends Array<any>, TData> = [OperationState<TData>, OperationTrigger<TArgs, TData>]
-export const useApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher): UseApiResult<Parameters<TFetcher>, ExtractPromiseType<ReturnType<TFetcher>>> => {
-  const [operationState, setOperationState] = useState<OperationState<ExtractPromiseType<ReturnType<TFetcher>>>>(INITIAL_OPERATION_STATE)
+export type UseApiResult<TArgs extends Array<any>, TSuccessData, TErrorData> = [OperationState<TSuccessData, TErrorData>, OperationTrigger<TArgs, TSuccessData, TErrorData>]
+export const useApi = <TFetcher extends Fetcher<any, any>>(fetcher: TFetcher): UseApiResult<Parameters<TFetcher>, ExtractResultsFromFetcher<TFetcher>[0], ExtractResultsFromFetcher<TFetcher>[1]> => {
+  const [operationState, setOperationState] = useState<OperationState<ExtractResultsFromFetcher<TFetcher>[0], ExtractResultsFromFetcher<TFetcher>[1]>>(INITIAL_OPERATION_STATE)
   const isMountedRef = useRef(true)
 
   useEffect(() => {
@@ -51,18 +55,19 @@ export const useApi = <TFetcher extends Fetcher<any>>(fetcher: TFetcher): UseApi
       setOperationState(LOADING_STATE)
     }
 
-    try {
-      const data = await fetcher(...args)
+    const result = await fetcher(...args)
+
+    if (result.type === FetchResultType.SUCCESS) {
       if (isMountedRef.current) {
-        setOperationState(successState(data))
+        setOperationState(successState(result.data))
       }
-      return successState(data)
-    } catch (err) {
-      if (isMountedRef.current) {
-        setOperationState(errorState(err))
-      }
-      return errorState(err)
+      return successState(result.data)
     }
+
+    if (isMountedRef.current) {
+      setOperationState(errorState(result.error))
+    }
+    return errorState(result.error)
   }, [fetcher, isMountedRef])
 
   return [operationState, operationTrigger]
